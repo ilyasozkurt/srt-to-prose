@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SRT to Prose Converter</title>
+    <!-- Add Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container py-5">
+
+<h1 class="fs-3 mb-4">SRT to Prose Converter</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="input-group">
+            <input type="file" accept=".srt" class="form-control" id="srt-file-input">
+            <button class="btn btn-primary" id="convert-button">Convert</button>
+        </div>
+        <small class="form-text text-muted">Please select an SRT file.</small>
+    </div>
+</div>
+
+<h2 class="fs-4 mb-4">Parsing Results</h2>
+
+<div class="card">
+    <div class="card-body">
+        <ul class="nav nav-pills mb-3" id="output-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="prose-tab" data-bs-toggle="tab" data-bs-target="#prose-tab-content" type="button" role="tab" aria-controls="prose-tab-content" aria-selected="false">
+                    Prose View
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table-tab-content" type="button" role="tab" aria-controls="table-tab-content" aria-selected="false">
+                    Table View
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="transcript-tab" data-bs-toggle="tab" data-bs-target="#transcript-tab-content" type="button" role="tab" aria-controls="transcript-tab-content" aria-selected="true">
+                    Transcript
+                </button>
+            </li>
+        </ul>
+        <div class="tab-content" id="output-tabs-content">
+            <div class="tab-pane fade bg-light p-3 border rounded" id="transcript-tab-content" role="tabpanel" aria-labelledby="transcript-tab">
+                <p class="mb-0 alert alert-warning">Please select an SRT file.</p>
+            </div>
+            <div class="tab-pane fade bg-light p-3 border rounded" id="table-tab-content" role="tabpanel" aria-labelledby="table-tab">
+                <p class="mb-0 alert alert-warning">Please select an SRT file.</p>
+            </div>
+            <div class="tab-pane fade bg-light p-3 border rounded show active" id="prose-tab-content" role="tabpanel" aria-labelledby="prose-tab">
+                <p class="mb-0 alert alert-warning">Please select an SRT file.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap 5 JS and jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+    const pleaseSelectSrtFileMessage = 'Please select an SRT file.';
+    const pleaseSelectSrtFile = '<p class="alert alert-warning mb-0">' + pleaseSelectSrtFileMessage + '</p>';
+
+    $(document).ready(function () {
+
+        $('#srt-file-input').change(function () {
+            const file = $('#srt-file-input').prop('files')[0];
+            if (file && file.name.endsWith('.srt')) {
+                $('.form-text').html(file.name);
+            } else {
+                $('.form-text').html(pleaseSelectSrtFileMessage);
+            }
+        });
+
+        $('#convert-button').click(function () {
+            const file = $('#srt-file-input').prop('files')[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const subtitles = parseSrt(event.target.result);
+                    let transcript = generateTranscript(subtitles);
+                    let table = generateTableView(subtitles);
+                    let prose = generateProseView(subtitles);
+                    $('#transcript-tab-content').html(transcript);
+                    $('#table-tab-content').html(table);
+                    $('#prose-tab-content').html(prose);
+                };
+                reader.readAsText(file);
+            } else {
+                $('#transcript-tab-content').html(pleaseSelectSrtFile);
+                $('#table-tab-content').html(pleaseSelectSrtFile);
+                $('#prose-tab-content').html(pleaseSelectSrtFile);
+            }
+        });
+    });
+
+    function parseSrt(srt) {
+        const subtitleBlocks = srt.trim().split(/\n\s*\n/);
+        const subtitles = subtitleBlocks.map(subtitleBlock => {
+            let [timeString, ...textLines] = subtitleBlock.split("\n");
+            timeString = textLines[0];
+            textLines.shift(); // remove index
+            const [startTimeString, endTimeString] = timeString.split(" --> ");
+            const text = textLines
+                .join("\n")
+                .replace(/<[^>]*>/g, "")
+                .replace(/\{.*?\}/g, '')
+            return {
+                startTimeString,
+                endTimeString,
+                text
+            };
+        });
+        return subtitles;
+    }
+
+    function generateTranscript(subtitles) {
+        const lines = subtitles.map(subtitle => `<p>${subtitle.text}</p>`);
+        return lines.join('');
+    }
+
+    function generateTableView(subtitles) {
+        const rows = subtitles.map(subtitle => `
+      <tr>
+        <td>${subtitle.startTimeString}</td>
+        <td>${subtitle.endTimeString}</td>
+        <td>${subtitle.text}</td>
+      </tr>
+    `);
+        const table = `
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Subtitles</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.join('')}
+        </tbody>
+      </table>
+    `;
+        return table;
+    }
+
+    function generateProseView(subtitles) {
+        const paragraphs = subtitles.map(subtitle => subtitle.text);
+        const prose = paragraphs.join('');
+        return prose;
+    }
+</script>
+</body>
+</html>
