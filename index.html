@@ -4,6 +4,7 @@
     <title>SRT to Prose Converter</title>
     <!-- Add Bootstrap 5 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
+    <link rel="canonical" href="https://ilyasozkurt.com/programming/how-to-convert-srt-to-text-using-regex-in-javascript/" />
 </head>
 <body class="container py-5">
 
@@ -122,15 +123,12 @@
     }
 
     function generateTableView(subtitles) {
-        const rows = subtitles.map(subtitle => `
-      <tr>
+        const rows = subtitles.map(subtitle => `<tr>
         <td>${subtitle.startTimeString}</td>
         <td>${subtitle.endTimeString}</td>
         <td>${subtitle.text}</td>
-      </tr>
-    `);
-        const table = `
-      <table class="table table-bordered table-striped">
+      </tr>`);
+        const table = `<table class="table table-bordered table-striped">
         <thead>
           <tr>
             <th>Start Time</th>
@@ -141,8 +139,7 @@
         <tbody>
           ${rows.join('')}
         </tbody>
-      </table>
-    `;
+      </table>`;
         return table;
     }
 
